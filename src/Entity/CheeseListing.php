@@ -18,12 +18,18 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Constraints\Valid;
 
 #[ApiResource(
-    collectionOperations: ["get", "post"],
+    collectionOperations: [
+        "get" =>  ["security" => "is_granted('ROLE_USER')"],
+        // "post"
+        "post" => ["security" => "is_granted('ROLE_USER')"]
+    ],
     itemOperations: [
         "get" => [
             // 'path' => "/qaz/{id}/"
             "normalization_context" => ["groups" => ["cheese_listing:read", "cheese_listing:item:get"]],
-        ], "put"
+        ],
+        "put" => ["security" => "is_granted('ROLE_USER')"],
+        "delete" => ["security" => "is_granted('ROLE_ADMIN')"]
     ],
     shortName: "cheeses",
     normalizationContext: ["groups" => ["cheese_listing:read"], "swagger_definition_name" => "Read"],
