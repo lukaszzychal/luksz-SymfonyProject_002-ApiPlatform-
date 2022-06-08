@@ -4,11 +4,13 @@ namespace App\Test;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\Client;
+use App\Entity\CheeseListing;
 // use App\ApiPlatform\Test\Client;
 use App\Entity\User;
 use App\Repository\CheeseListingRepository;
 use App\Repository\UserRepository;
 use Doctrine\Bundle\DoctrineBundle\Registry;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\Id;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,7 +22,7 @@ class CustomApiTestCase extends ApiTestCase
 
     // '$argon2id$v=19$m=65536,t=6,p=1$AIC3IESQ64NgHfpVQZqviw$1c7M56xyiaQFBjlUBc7T0s53/PzZCjV56lbHnhOUXx8');
 
-    public function createUser(string $email, string $password): User
+    protected function createUser(string $email, string $password): User
     {
         $user = new User();
         $user->setEmail($email);
@@ -39,13 +41,13 @@ class CustomApiTestCase extends ApiTestCase
         /**
          * @var Registry
          */
-        $doctrine = self::getContainer()->get('doctrine');
+        $doctrine = $this->getDoctrine();
 
 
         /**
-         * @var EntityManager $em
+         * @var EntityManagerInterface $em
          */
-        $em = $doctrine->getManager();
+        $em = $this->getEntityManager();
 
         $em->persist($user);
         $em->flush();
@@ -65,7 +67,7 @@ class CustomApiTestCase extends ApiTestCase
         return $user;
     }
 
-    public function logIn(Client $client, string $email, string $password): void
+    protected function logIn(Client $client, string $email, string $password): void
     {
 
         $client->request(
@@ -84,10 +86,36 @@ class CustomApiTestCase extends ApiTestCase
     }
 
 
-    public function createUserAndLogIn(Client $client, string $email, string $password): User
+    protected function createUserAndLogIn(Client $client, string $email, string $password): User
     {
         $user = $this->createUser($email, $password);
         $this->logIn($client, $email, $password);
         return $user;
+    }
+
+    protected function getDoctrine(): Registry
+    {
+        return  self::getContainer()->get('doctrine');
+    }
+
+    protected function getEntityManager(): EntityManagerInterface
+    {
+
+        return $this->getDoctrine()->getManager();
+    }
+
+
+    protected function createCheeseListing(User $user): CheeseListing
+    {
+        $cheeseListing = new CheeseListing('Block of cheddar');
+        $cheeseListing->setOwner($user);
+        $cheeseListing->setPrice(1000);
+        $cheeseListing->setDescription('mmmm');
+
+        $em = $this->getEntityManager();
+        $em->persist($cheeseListing);
+        $em->flush();
+
+        return $cheeseListing;
     }
 }

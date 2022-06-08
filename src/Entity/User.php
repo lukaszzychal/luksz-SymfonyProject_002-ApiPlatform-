@@ -20,6 +20,22 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Valid;
 
 #[ApiResource(
+    security: "is_granted('ROLE_USER')",
+    itemOperations: [
+        'get',
+        'put' => [
+            'security' => "is_granted('ROLE_USER') and  object = user "
+        ],
+        'delete' => [
+            'security' => "is_granted('ROLE_ADMIN')"
+        ]
+    ],
+    collectionOperations: [
+        'get' => [
+            "security" => "is_granted('ROLE_ADMIN')"
+        ],
+        'post' => ['security' => "is_granted('IS_AUTHENTICATED_ANONYMOUSLY')"]
+    ],
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ["groups" => ["user:write"]],
 )]

@@ -3,6 +3,7 @@
 namespace App\Tests;
 
 use ApiPlatform\Core\Bridge\Symfony\Bundle\Test\ApiTestCase;
+use App\Entity\CheeseListing;
 use App\Entity\User;
 use App\Test\CustomApiTestCase;
 use Doctrine\Bundle\DoctrineBundle\Registry;
@@ -18,7 +19,7 @@ class CheeseListingResourceTest extends CustomApiTestCase
 
     use ReloadDatabaseTrait;
 
-    public function testSomething(): void
+    public function testCreateCheeses(): void
     {
         $client = self::createClient();
         $client->request(Request::METHOD_POST, '/api/cheeses', [
@@ -46,5 +47,38 @@ class CheeseListingResourceTest extends CustomApiTestCase
 
         // $this->assertResponseIsSuccessful();
         // $this->assertJsonContains(['@id' => '/']);
+    }
+
+    public function testUpdateCheeseListing()
+    {
+        $client = self::createClient();
+        $user1 = $this->createUser('user1@test.pl', 'test');
+        $user2 = $this->createUser('user2@test.pl', 'test');
+
+        $cheeseListing = $this->createCheeseListing($user1);
+
+        $this->logIn($client, 'user1@test.pl', 'test');
+        $client->request(Request::METHOD_PUT, '/api/cheeses/' . $cheeseListing->getId(), [
+            'json' => [
+                'title' => "Update!"
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(JsonResponse::HTTP_OK);
+        // dump($client->getResponse()->getContent());
+
+        $this->logIn($client, 'user2@test.pl', 'test');
+        $client->request(Request::METHOD_PUT, '/api/cheeses/' . $cheeseListing->getId(), [
+            'json' => [
+                'title' => "Update!", 'owner' => '/api/users/' . $user2->getId()
+            ]
+        ]);
+
+        $this->assertResponseStatusCodeSame(JsonResponse::HTTP_FORBIDDEN, 'Only author can updated');
+        // var_dump($client->getResponse()->getContent(true));
+
+
+
+        // $client->request()
     }
 }

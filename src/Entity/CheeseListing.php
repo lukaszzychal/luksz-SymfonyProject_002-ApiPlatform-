@@ -28,7 +28,10 @@ use Symfony\Component\Validator\Constraints\Valid;
             // 'path' => "/qaz/{id}/"
             "normalization_context" => ["groups" => ["cheese_listing:read", "cheese_listing:item:get"]],
         ],
-        "put" => ["security" => "is_granted('ROLE_USER')"],
+        "put" => [
+            "security" => "is_granted('EDIT',object)",
+            "security_message" => "Sorry, but you are not the book owner.",
+        ],
         "delete" => ["security" => "is_granted('ROLE_ADMIN')"]
     ],
     shortName: "cheeses",
