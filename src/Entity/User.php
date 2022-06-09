@@ -14,6 +14,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Annotation\SerializedName;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\Json;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -24,7 +25,7 @@ use Symfony\Component\Validator\Constraints\Valid;
     itemOperations: [
         'get',
         'put' => [
-            'security' => "is_granted('ROLE_USER') and  object = user "
+            'security' => "is_granted('ROLE_USER') and  object == user "
         ],
         'delete' => [
             'security' => "is_granted('ROLE_ADMIN')"
@@ -34,7 +35,10 @@ use Symfony\Component\Validator\Constraints\Valid;
         'get' => [
             "security" => "is_granted('ROLE_ADMIN')"
         ],
-        'post' => ['security' => "is_granted('IS_AUTHENTICATED_ANONYMOUSLY')"]
+        'post' => [
+            'security' => "is_granted('IS_AUTHENTICATED_ANONYMOUSLY')",
+            'validation_groups' => ['Default', 'create']
+        ]
     ],
     normalizationContext: ['groups' => ['user:read']],
     denormalizationContext: ["groups" => ["user:write"]],
@@ -60,6 +64,7 @@ class User implements UserInterface
      * @Groups({"user:read", "user:write"})
      */
     #[Email()]
+    #[NotBlank()]
     private $email;
 
     // /**
@@ -73,9 +78,15 @@ class User implements UserInterface
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
-     * @Groups({"user:read", "user:write"})
+     * 
      */
     private $password;
+
+
+    #[Groups(['user:write'])]
+    #[SerializedName('password')]
+    #[NotBlank(groups: ['create'])]
+    private $plainPassword;
 
     /**
      * @ORM\Column(type="string", length=255, unique=true)
@@ -175,7 +186,7 @@ class User implements UserInterface
     public function eraseCredentials()
     {
         // If you store any temporary, sensitive data on the user, clear it here
-        // $this->plainPassword = null;
+        $this->plainPassword = null;
     }
 
     public function setUsername(string $username): self
@@ -211,6 +222,26 @@ class User implements UserInterface
                 $cheeseListing->setOwner(null);
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Get the value of plainPassword
+     */
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
+
+    /**
+     * Set the value of plainPassword
+     *
+     * @return  self
+     */
+    public function setPlainPassword(string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
 
         return $this;
     }
