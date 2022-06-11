@@ -73,6 +73,7 @@ class User implements UserInterface
     //  **/
     #[ORM\Column(type: JsonType::class)]
     // #[Groups(["user:read", "user:write"])]
+    #[Groups(['user:write'])]
     private $roles = [];
 
     /**
@@ -101,6 +102,12 @@ class User implements UserInterface
     #[Groups(['user:read', 'user:write'])]
     #[Valid()]
     private $cheeseListings;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    #[Groups(['user:read', 'user:write'])]
+    private $phonenumber;
 
     public function __construct()
     {
@@ -242,6 +249,18 @@ class User implements UserInterface
     public function setPlainPassword(string $plainPassword): self
     {
         $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
+    public function getPhonenumber(): ?string
+    {
+        return $this->phonenumber;
+    }
+
+    public function setPhonenumber(?string $phonenumber): self
+    {
+        $this->phonenumber = $phonenumber;
 
         return $this;
     }
