@@ -32,7 +32,7 @@ class CustomApiTestCase extends ApiTestCase
 
 
 
-        $encodePassword = self::getContainer()->get('security.password_encoder')->encodePassword($user, $password);
+        $encodePassword = static::getContainer()->get('security.user_password_hasher')->hashPassword($user, $password);
 
         $user->setPassword($encodePassword);
 
@@ -55,7 +55,7 @@ class CustomApiTestCase extends ApiTestCase
         /**
          * @var UserRepository
          */
-        $repo = self::getContainer()->get(UserRepository::class);
+        $repo = static::getContainer()->get(UserRepository::class);
         /**
          * @var User
          */
@@ -95,7 +95,7 @@ class CustomApiTestCase extends ApiTestCase
 
     protected function getDoctrine(): Registry
     {
-        return  self::getContainer()->get('doctrine');
+        return  static::getContainer()->get('doctrine');
     }
 
     protected function getEntityManager(): EntityManagerInterface

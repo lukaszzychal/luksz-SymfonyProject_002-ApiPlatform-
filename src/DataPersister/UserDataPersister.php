@@ -5,18 +5,18 @@ namespace App\DataPersister;
 use ApiPlatform\Core\DataPersister\DataPersisterInterface;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserDataPersister implements DataPersisterInterface
 {
 
     private EntityManagerInterface $entityManager;
-    private UserPasswordEncoderInterface $userPasswordEncoderInterface;
+    private UserPasswordHasherInterface $userPasswordHasherInterface;
 
-    public function __construct(EntityManagerInterface $entityManager, UserPasswordEncoderInterface $userPasswordEncoderInterface)
+    public function __construct(EntityManagerInterface $entityManager, UserPasswordHasherInterface $userPasswordHasherInterface)
     {
         $this->entityManager = $entityManager;
-        $this->userPasswordEncoderInterface = $userPasswordEncoderInterface;
+        $this->userPasswordHasherInterface = $userPasswordHasherInterface;
     }
 
 
@@ -41,7 +41,7 @@ class UserDataPersister implements DataPersisterInterface
     {
         if ($data->getPlainPassword()) {
             $data->setPassword(
-                $this->userPasswordEncoderInterface->encodePassword($data, $data->getPlainPassword())
+                $this->userPasswordHasherInterface->hashPassword($data, $data->getPlainPassword())
             );
 
 
