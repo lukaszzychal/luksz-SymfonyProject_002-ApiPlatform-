@@ -71,9 +71,12 @@ class User implements UserInterface
     //  * @ORM\Column(type="json")
     //  * 
     //  **/
-    #[ORM\Column(type: JsonType::class)]
+    // #[ORM\Column(type: JsonType::class)]
+    /**
+     * @ORM\Column(type="json", nullable=true)
+     */
     // #[Groups(["user:read", "user:write"])]
-    #[Groups(['user:write'])]
+    #[Groups(['admin:write', 'user:read', 'admin:read'])]
     private $roles = [];
 
     /**
@@ -106,7 +109,7 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
-    #[Groups(['user:read', 'user:write'])]
+    #[Groups(['admin:read', 'user:write'])]
     private $phonenumber;
 
     public function __construct()
