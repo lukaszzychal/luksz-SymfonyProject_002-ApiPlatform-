@@ -33,7 +33,7 @@ use Symfony\Component\Validator\Constraints\Valid;
     ],
     collectionOperations: [
         'get' => [
-            "security" => "is_granted('ROLE_ADMIN')"
+            // "security" => "is_granted('ROLE_ADMIN')"
         ],
         'post' => [
             'security' => "is_granted('IS_AUTHENTICATED_ANONYMOUSLY')",
@@ -94,7 +94,7 @@ class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=255, unique=true)
-     * @Groups({"user:read", "user:write", "cheese_listing:item:get", "cheese_listing:write"})
+     * @Groups({"user:read", "user:write", "cheese:item:get", "cheese:write"})
      */
     #[NotBlank()]
     private $username;
@@ -109,13 +109,18 @@ class User implements UserInterface
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
-    #[Groups(['admin:read', 'user:write'])]
+    #[Groups(['admin:read', 'owner:read', 'user:write'])]
     private $phonenumber;
 
     public function __construct()
     {
         // $this->roles[] = "DEFAULT";
         $this->cheeseListings = new ArrayCollection();
+    }
+
+    public function __toString()
+    {
+        return $this->username;
     }
 
     public function getId(): ?int

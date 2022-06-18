@@ -22,31 +22,36 @@ class CheeseListingResourceTest extends CustomApiTestCase
     public function testCreateCheeses(): void
     {
         $client = self::createClient();
+
         $client->request(Request::METHOD_POST, '/api/cheeses', [
-            'headers' => [
-                'Content-Type' => 'application/json',
-                'json' => []
-            ]
+            'json' => []
         ]);
 
         $this->assertResponseStatusCodeSame(JsonResponse::HTTP_UNAUTHORIZED);
 
-        $this->createUserAndLogIn($client, 'cheeseplease@example.com', 'foo');
+        $authenticatedUser =    $this->createUserAndLogIn($client, 'test@test.pl', 'test');
+        $otherUser = $this->createUser('otheruser@test.pl', 'testother');
 
-        $client->request('POST', '/api/cheeses', [
-            'headers' => ['Content-Type' => 'application/json'],
-            'json' => [
-                // 'title' => 'test'
-            ],
+        $cheesyData = [
+            'title' => 'Mystery cheese... kinda green',
+            'description' => 'What mysteries does it hold?',
+            'price' => 5000
+        ];
+
+        $client->request(Request::METHOD_POST, '/api/cheeses', [
+            'json' => $cheesyData,
         ]);
-        $this->assertResponseStatusCodeSame(400);
+        $this->assertResponseStatusCodeSame(201);
 
-        $this->assertResponseStatusCodeSame(JsonResponse::HTTP_BAD_REQUEST);
+        $client->request(Request::METHOD_POST, '/api/cheeses', [
+            'json' => $cheesyData + ['owner' => '/api/users/' . $otherUser->getId()],
+        ]);
+        $this->assertResponseStatusCodeSame(422, 'not passing the correct owner');
 
-        // $response = static::createClient()->request('GET', '/');
-
-        // $this->assertResponseIsSuccessful();
-        // $this->assertJsonContains(['@id' => '/']);
+        $client->request(Request::METHOD_POST, '/api/cheeses', [
+            'json' => $cheesyData + ['owner' => '/api/users/' . $authenticatedUser->getId()],
+        ]);
+        $this->assertResponseStatusCodeSame(201);
     }
 
     public function testUpdateCheeseListing()

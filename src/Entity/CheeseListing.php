@@ -8,25 +8,28 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\BooleanFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\RangeFilter;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Core\Serializer\Filter\PropertyFilter;
+use App\Doctrine\CheeseListingSetOwnerListener;
 use App\Repository\CheeseListingRepository;
 use Carbon\Carbon;
 use DateTime;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\EntityListeners;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use App\Validator\IsValidOwner;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Constraints\Valid;
 
 #[ApiResource(
     collectionOperations: [
-        "get" =>  ["security" => "is_granted('ROLE_USER')"],
+        "get",
         // "post"
         "post" => ["security" => "is_granted('ROLE_USER')"]
     ],
     itemOperations: [
         "get" => [
             // 'path' => "/qaz/{id}/"
-            "normalization_context" => ["groups" => ["cheese_listing:read", "cheese_listing:item:get"]],
+            "normalization_context" => ["groups" => ["cheese:read", "cheese:item:get"]],
         ],
         "put" => [
             "security" => "is_granted('EDIT',object)",
@@ -34,9 +37,8 @@ use Symfony\Component\Validator\Constraints\Valid;
         ],
         "delete" => ["security" => "is_granted('ROLE_ADMIN')"]
     ],
-    shortName: "cheeses",
-    normalizationContext: ["groups" => ["cheese_listing:read"], "swagger_definition_name" => "Read"],
-    denormalizationContext: ["groups" => ["cheese_listing:write"], "swagger_definition_name" => "Write"],
+    shortName: "cheese",
+
     attributes: [
         "pagination_items_per_page" => 10,
         "formats" => ["jsonld", "json", "html", "jsonhal", "csv" => ["text/csv"]]
@@ -57,6 +59,7 @@ use Symfony\Component\Validator\Constraints\Valid;
  * "owner.username": "partial"
  * })
  */
+#[ORM\EntityListeners(["App\Doctrine\CheeseListingSetOwnerListener"])]
 class CheeseListing
 {
     /**
@@ -75,21 +78,21 @@ class CheeseListing
      *     maxMessage="Describe your cheese in 50 chars or less"
      * )
      */
-    #[Groups(['cheese_listing:read', 'cheese_listing:write', 'user:read', 'user:write'])]
+    #[Groups(['cheese:read', 'cheese:write', 'user:read', 'user:write'])]
     private $title;
 
     /**
      * @ORM\Column(type="text")
      * @Assert\NotBlank()
      */
-    #[Groups(['cheese_listing:read', 'user:write'])]
+    #[Groups(['cheese:read', 'user:write'])]
     private $description;
 
     /**
      * @ORM\Column(type="integer")
      * @Assert\NotBlank()
      */
-    #[Groups(['cheese_listing:read', 'cheese_listing:write', 'user:read', 'user:write'])]
+    #[Groups(['cheese:read', 'cheese:write', 'user:read', 'user:write'])]
     private $price = 0;
 
     /**
@@ -101,16 +104,18 @@ class CheeseListing
      * @ORM\Column(type="boolean")
      * 
      */
-    #[Groups(['cheese_listing:read'])]
+    #[Groups(['cheese:read'])]
     private $isPublished = false;
 
     /**
-     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="cheeseListings")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User", inversedBy="cheeseListings")
      * @ORM\JoinColumn(nullable=false)
+     * @Groups({"cheese:read", "cheese:collection:post"})
+     * @IsValidOwner()
+     
      */
-    #[Groups(['cheese_listing:read', 'cheese_listing:write', 'user:write'])]
-    #[Valid()]
     private $owner;
+
 
 
     public function __construct(string $title)
@@ -137,7 +142,7 @@ class CheeseListing
     }
 
     /**
-     * @Groups("cheese_listing:read")
+     * @Groups("cheese:read")
      */
     public function getShortDescription(): ?string
     {
@@ -172,7 +177,7 @@ class CheeseListing
         return $this->createdAt;
     }
 
-    #[Groups(['cheese_listing:read'])]
+    #[Groups(['cheese:read'])]
     public function getCreatedAtAgo(): string
     {
         return Carbon::instance($this->getCreatedAt())->diffForHumans();
@@ -193,7 +198,7 @@ class CheeseListing
     /**
      * The description of the cheese as raw text.
      *
-     * @Groups("cheese_listing:write")
+     * @Groups("cheese:write")
      */
     #[SerializedName('description')]
     public function setTextDescription(string $description): self
